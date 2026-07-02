@@ -2,8 +2,10 @@
 
 ### Video Demonstration
 
-<video src="./assests/videoDemo.mp4" controls="controls" style="max-width: 100%;">
-  Your browser does not support the video tag. <a href="./assests/videoDemo.mp4">Click here to watch the demo</a>.
+[Watch the Video Demonstration on Google Drive](https://drive.google.com/file/d/1M43hXeyu1G7LP0-KyQ6SvC2iYv7IlN2z/view?usp=sharing)
+
+<video src="./assets/videoDemo.mp4" controls="controls" style="max-width: 100%;">
+  Your browser does not support the video tag. <a href="https://drive.google.com/file/d/1M43hXeyu1G7LP0-KyQ6SvC2iYv7IlN2z/view?usp=sharing">Click here to watch the demo</a>.
 </video>
 
 ## 🎯 What Are We Doing?
@@ -61,6 +63,6 @@ Our model improved significantly as we scaled our dataset and transitioned from 
 
 Here are visual demonstrations of our pipeline in action:
 
-![Result 1](./assests/image.png)
+![Result 1](./assets/image.png)
 
-![Result 2](./assests/image2.png)
+![Result 2](./assets/image2.png)
