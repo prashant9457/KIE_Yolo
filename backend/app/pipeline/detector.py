@@ -12,7 +12,7 @@ class IngredientDetector:
         self.model = YOLO(str(MODEL_PATH))
         print("✅ YOLO model loaded successfully!")
 
-    def detect(self, source, conf=0.75, iou=0.20):
+    def detect(self, source, conf=0.45, iou=0.20):
         # Run inference directly on the source parameter (supports np.ndarray image arrays)
         results = self.model.predict(
             source=source,
@@ -24,8 +24,6 @@ class IngredientDetector:
         boxes = results[0].boxes
 
         return {
-            "result": results,
-            "boxes": boxes,
             "xyxy": boxes.xyxy.cpu().tolist(),
             "confidence": boxes.conf.cpu().tolist(),
             "class_ids": boxes.cls.cpu().tolist()

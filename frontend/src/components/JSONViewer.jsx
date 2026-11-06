@@ -3,13 +3,18 @@ import { Copy, Check, Download, FileJson } from 'lucide-react';
 
 const JSONViewer = ({ jsonData, title = "Structured Output (JSON)" }) => {
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState('');
 
   const formattedJson = JSON.stringify(jsonData, null, 2);
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(formattedJson);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(formattedJson);
+      setCopied(true);
+      setCopyError('');
+    } catch {
+      setCopyError('Could not copy. Use Download to save the JSON.');
+    }
   };
 
   const handleDownload = () => {
@@ -68,7 +73,7 @@ const JSONViewer = ({ jsonData, title = "Structured Output (JSON)" }) => {
           </div>
           <div>
             <h3 className="font-bold text-slate-200 tracking-tight text-sm">{title}</h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">Parsed nutrition and allergen structure</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Detected regions and model output</p>
           </div>
         </div>
 
@@ -106,6 +111,7 @@ const JSONViewer = ({ jsonData, title = "Structured Output (JSON)" }) => {
         </div>
       </div>
 
+      {copyError && <p role="alert" className="text-red-300 text-xs">{copyError}</p>}
       {/* Editor Body */}
       <div className="flex-1 overflow-auto rounded-xl bg-slate-950/80 border border-slate-850 p-4 font-mono text-[11px] leading-relaxed max-h-[450px] relative">
         <div className="flex">

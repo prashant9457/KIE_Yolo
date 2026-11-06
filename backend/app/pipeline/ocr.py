@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import paddleocr
-import paddle
 from paddleocr import PaddleOCR
 
 
@@ -19,7 +17,7 @@ class IngredientOCR:
         )
         print("📦 PaddleOCR Loaded!")
 
-    def extract_text(self, image_input, boxes):
+    def extract_text(self, image_input, detections):
         # Support both image paths and direct in-memory NumPy arrays
         if isinstance(image_input, np.ndarray):
             img = image_input
@@ -32,7 +30,7 @@ class IngredientOCR:
         h, w = img.shape[:2]
         output = []
 
-        for i, box in enumerate(boxes):
+        for i, box in enumerate(detections["xyxy"]):
             x1, y1, x2, y2 = map(int, box)
 
             # Clamp coordinates to image boundaries
@@ -63,7 +61,9 @@ class IngredientOCR:
             output.append({
                 "box_id": i,
                 "bbox": [x1, y1, x2, y2],
-                "text": text
+                "text": text,
+                "confidence": detections["confidence"][i],
+                "class_id": int(detections["class_ids"][i])
             })
 
         return output

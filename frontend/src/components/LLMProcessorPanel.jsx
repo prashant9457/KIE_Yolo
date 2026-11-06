@@ -23,7 +23,7 @@ const LLMProcessorPanel = ({
           </div>
           <h4 className="font-semibold text-gray-900 text-sm">Groq LLM Call</h4>
           <p className="text-xs text-gray-500 max-w-xs mt-1">
-            Refining transcription on Llama-3.3-70b...
+            Refining the extracted text...
           </p>
         </div>
       )}
@@ -33,7 +33,7 @@ const LLMProcessorPanel = ({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1">
             <h2 className="font-semibold text-gray-900 text-base">Groq LLM Post-Processing</h2>
-            <p className="text-xs text-gray-500 mt-1">Refine and correct layout transcriptions using Llama 3.3</p>
+            <p className="text-xs text-gray-500 mt-1">Refine and correct layout transcriptions using the configured Groq model</p>
           </div>
           <button
             onClick={() => setShowPromptConfig(!showPromptConfig)}
@@ -51,7 +51,7 @@ const LLMProcessorPanel = ({
             <textarea
               value={customPrompt}
               onChange={(e) => setCustomPrompt(e.target.value)}
-              placeholder="Enter custom instructions for Llama 3.3..."
+              placeholder="Enter custom instructions for the model..."
               rows={4}
               className="w-full text-xs font-mono p-3 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none text-gray-700 leading-normal"
             />
@@ -72,7 +72,7 @@ const LLMProcessorPanel = ({
 
         {/* LLM Output Result */}
         <div className="flex-1 flex flex-col justify-start min-h-0">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 block">Llama 3.3 Output</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 block">{results?.json.llm_post_process?.model || 'Model'} Output</span>
           {!results ? (
             /* Empty state */
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-gray-200 rounded-lg">
@@ -80,7 +80,7 @@ const LLMProcessorPanel = ({
                 <Sparkles className="w-5 h-5" />
               </div>
               <p className="text-xs text-gray-500">
-                Configure your custom instructions and click Submit to see LLM corrections.
+                Extract an image to see corrections. Use a custom prompt to refine the result.
               </p>
             </div>
           ) : (

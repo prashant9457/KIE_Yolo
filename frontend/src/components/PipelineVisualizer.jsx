@@ -1,45 +1,45 @@
 import React from 'react';
-import { 
-  Upload, 
-  Image, 
-  Scan, 
-  FileText, 
-  Sparkles, 
+import {
+  Upload,
+  Image,
+  Scan,
+  FileText,
+  Sparkles,
   HelpCircle,
-  ArrowRight 
+  ArrowRight
 } from 'lucide-react';
 
 const PipelineVisualizer = () => {
   const steps = [
-    { 
-      icon: Upload, 
-      label: 'Upload Image', 
-      desc: 'Select source label file' 
+    {
+      icon: Upload,
+      label: 'Upload Image',
+      desc: 'Select source label file'
     },
-    { 
-      icon: Image, 
-      label: 'Preprocessing', 
-      desc: 'Load and decode image in-memory' 
+    {
+      icon: Image,
+      label: 'Preprocessing',
+      desc: 'Load and decode image in-memory'
     },
-    { 
-      icon: Scan, 
-      label: 'YOLO Text Detection', 
-      desc: 'Locate text boundary coordinates' 
+    {
+      icon: Scan,
+      label: 'YOLO Text Detection',
+      desc: 'Locate text boundary coordinates'
     },
-    { 
-      icon: FileText, 
-      label: 'Text Extraction', 
-      desc: 'Transcribe crops using PaddleOCR' 
+    {
+      icon: FileText,
+      label: 'Text Extraction',
+      desc: 'Transcribe crops using PaddleOCR'
     },
-    { 
-      icon: Sparkles, 
-      label: 'Postprocessing using LLM', 
-      desc: 'Refine raw words with Llama 3.3' 
+    {
+      icon: Sparkles,
+      label: 'Postprocessing using LLM',
+      desc: 'Refine text with the configured model'
     },
-    { 
-      icon: HelpCircle, 
-      label: 'Prompt to get information', 
-      desc: 'Structure fields by instructions' 
+    {
+      icon: HelpCircle,
+      label: 'Prompt to get information',
+      desc: 'Structure fields by instructions'
     }
   ];
 

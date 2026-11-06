@@ -1,5 +1,90 @@
 # Ingredient Extraction Pipeline
 
+React interface and FastAPI service for YOLO text detection, PaddleOCR transcription,
+and ingredient identification with Groq. Supports custom prompts, annotated images,
+and JSON exports.
+
+## Setup (PowerShell)
+
+Use Python 3.10+ and a Node.js version supported by Vite 8.
+
+```powershell
+python -m venv backend/venv
+backend/venv/Scripts/python -m pip install -r backend/requirements-dev.txt
+Copy-Item backend/.env.example backend/.env
+```
+
+Set `GROQ_API_KEY` in `backend/.env`. `GROQ_MODEL` defaults to
+`llama-3.1-8b-instant`. `CORS_ORIGINS` lists allowed frontend origins.
+
+Start the backend:
+
+```powershell
+cd backend
+venv/Scripts/python run.py
+```
+
+In a second terminal:
+
+```powershell
+cd frontend
+npm ci
+npm run dev
+```
+
+Vite proxies API requests to port 8000. Production hosting must route `/extract`,
+`/postprocess`, and `/health` to the backend. YOLO weights are included in
+`backend/app/models/best.pt`. PaddleOCR may download pretrained models on first use.
+Models load lazily, so the first extraction takes longer. OCR remains available
+when the Groq key is missing or the provider fails.
+
+## Architecture
+
+- `frontend/src/hooks/useExtraction.js`: workflow state, cancellation, and actions.
+- `frontend/src/services/api.js`: HTTP requests and response errors.
+- `frontend/src/services/annotations.js`: canvas annotations.
+- `frontend/src/components/`: presentation and file interaction.
+- `backend/app/api/routes.py`: HTTP input validation and response codes.
+- `backend/app/schemas.py`: typed request and response contracts.
+- `backend/app/services.py`: lazy model lifecycle and serialized predictor access.
+- `backend/app/pipeline/`: detection, OCR, Groq adapters, and orchestration.
+- `backend/app/config.py`: environment and application settings.
+
+Images remain in memory. Uploads are limited to 10 MB and decoded images to
+25 million pixels. YOLO uses the selected confidence threshold and returns actual
+confidence and class metadata. Shared predictor access is serialized per process;
+blocking extraction runs in a worker thread. Higher throughput needs dedicated
+model workers.
+
+## API
+
+- `GET /health`: process liveness, without loading models or checking providers.
+- `POST /extract`: multipart `file`, `confidence` (0.1?0.9, default 0.45), and
+  optional `custom_prompt`. Returns `detected_regions` and `llm_post_process`.
+- `POST /postprocess`: JSON `ocr_results` and optional `custom_prompt`, without
+  rerunning OCR. Each region has `box_id`, `bbox`, `text`, `confidence`, `class_id`.
+
+Invalid inputs return 400/422, large images 413, and unavailable extraction 503.
+LLM failures appear in the result's `error` field, preserving OCR output. The LLM
+`structured` output is a JSON object whose fields may vary with custom prompts.
+
+## Validation
+
+```powershell
+cd backend
+venv/Scripts/python -m unittest discover -s tests -v
+cd ../frontend
+npm run build
+npm run lint
+npm test
+```
+
+Tests mock inference and provider calls; model accuracy requires real package
+images. `pipeline.ipynb` preserves the Colab experiments. The historical research
+notes below describe earlier models; runtime model selection uses `GROQ_MODEL`.
+
+## Research notes
+
 ### Video Demonstration
 
 [Watch the Video Demonstration on Google Drive](https://drive.google.com/file/d/1M43hXeyu1G7LP0-KyQ6SvC2iYv7IlN2z/view?usp=sharing)

@@ -2,13 +2,14 @@ import React from 'react';
 import { Sliders } from 'lucide-react';
 import UploadCard from './UploadCard';
 
-const ControlPanel = ({ 
-  image, 
-  onImageSelected, 
-  confidence, 
-  setConfidence, 
-  handleExtract, 
-  isLoading 
+const ControlPanel = ({
+  image,
+  onImageSelected,
+  onError,
+  confidence,
+  setConfidence,
+  handleExtract,
+  isLoading
 }) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 flex flex-col justify-between space-y-6 min-h-[500px]">
@@ -29,11 +30,11 @@ const ControlPanel = ({
               {confidence.toFixed(2)}
             </span>
           </div>
-          <input 
-            type="range" 
-            min="0.1" 
-            max="0.9" 
-            step="0.05" 
+          <input
+            type="range"
+            min="0.1"
+            max="0.9"
+            step="0.05"
             value={confidence}
             onChange={(e) => setConfidence(parseFloat(e.target.value))}
             className="w-full accent-blue-600 cursor-pointer mt-1"
@@ -44,9 +45,10 @@ const ControlPanel = ({
         </div>
 
         {/* Upload Card */}
-        <UploadCard 
-          onImageSelected={onImageSelected} 
-          selectedImage={image} 
+        <UploadCard
+          onImageSelected={onImageSelected}
+          onError={onError}
+          selectedImage={image}
         />
       </div>
 

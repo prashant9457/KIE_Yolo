@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useExtraction } from './hooks/useExtraction';
 import './App.css';
 
 // Import modular components
@@ -7,76 +7,12 @@ import ControlPanel from './components/ControlPanel';
 import VisualPanel from './components/VisualPanel';
 import LLMProcessorPanel from './components/LLMProcessorPanel';
 
-// Import API services
-import { runOneClickExtraction, runLLMPostProcess } from './services/api';
-
 function App() {
-  const [image, setImage] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLLMLoading, setIsLLMLoading] = useState(false);
-  const [confidence, setConfidence] = useState(0.45);
-  const [results, setResults] = useState(null);
-  const [activeTab, setActiveTab] = useState('annotated'); // 'annotated' | 'json'
-  const [customPrompt, setCustomPrompt] = useState(
-    "Find the OCR region that contains the ingredients list.\n\nReturn json format only that contains the box number, bbox and the postprocessed corrected text"
-  );
-
-  const handleImageSelected = (imageDataUrl) => {
-    setImage(imageDataUrl);
-    setResults(null);
-  };
-
-  const handleExtract = async () => {
-    if (!image) return;
-    
-    setIsLoading(true);
-    try {
-      const data = await runOneClickExtraction(image, confidence, customPrompt);
-      setResults(data);
-      setActiveTab('annotated');
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePostProcess = async () => {
-    if (!results || !results.json || !results.json.detected_regions) return;
-
-    setIsLLMLoading(true);
-    try {
-      const llmResults = await runLLMPostProcess(results.json.detected_regions, customPrompt);
-      
-      // Update results state with refined Groq outputs
-      setResults(prev => ({
-        ...prev,
-        json: {
-          ...prev.json,
-          llm_post_process: llmResults
-        }
-      }));
-    } catch (err) {
-      console.error("Failed to run LLM post-processing:", err);
-    } finally {
-      setIsLLMLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setImage(null);
-    setResults(null);
-  };
-
-  const handleDownloadImage = () => {
-    if (!results || !results.annotatedImage) return;
-    const link = document.createElement('a');
-    link.href = results.annotatedImage;
-    link.download = 'annotated_label.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const {
+    image, results, confidence, setConfidence, customPrompt, setCustomPrompt,
+    activeTab, setActiveTab, error, setError, handleImageSelected, handleExtract,
+    handlePostProcess, handleDownloadImage, handleReset, isLoading, isLLMLoading,
+  } = useExtraction();
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] font-sans antialiased text-[#202124]">
@@ -95,6 +31,7 @@ function App() {
       {/* Main Workspace Area */}
       <main className="max-w-[1500px] mx-auto p-6 md:p-8 space-y-6">
         
+        {error && <div role="alert" className="p-4 rounded-lg border border-red-200 bg-red-50 text-red-800">{error}</div>}
         {/* Horizontal Pipeline Steps Visualizer */}
         <PipelineVisualizer />
 
@@ -106,10 +43,11 @@ function App() {
             <ControlPanel 
               image={image}
               onImageSelected={handleImageSelected}
+              onError={setError}
               confidence={confidence}
               setConfidence={setConfidence}
               handleExtract={handleExtract}
-              isLoading={isLoading}
+              isLoading={isLoading || isLLMLoading}
             />
           </div>
 
