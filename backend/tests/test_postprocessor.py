@@ -1,8 +1,24 @@
 import unittest
 from unittest.mock import Mock, MagicMock, patch
 from app.pipeline.postprocessor import IngredientPostProcessor
+import httpx
+from groq import PermissionDeniedError
 
 class PostProcessorTests(unittest.TestCase):
+    def test_project_permission_failure_has_actionable_message(self):
+        client = Mock()
+        response = httpx.Response(403, request=httpx.Request('POST', 'https://api.groq.com/openai/v1/chat/completions'))
+        client.chat.completions.create.side_effect = PermissionDeniedError(
+            'blocked', response=response,
+            body={'error': {'code': 'model_permission_blocked_project', 'message': 'private provider details'}},
+        )
+        with self.assertLogs('app.pipeline.postprocessor', level='WARNING'):
+            result = IngredientPostProcessor(client).postprocess(
+                [{'box_id': 0, 'bbox': [0, 0, 1, 1], 'text': 'salt'}])
+        self.assertIn('403', result['error'])
+        self.assertIn('https://console.groq.com/settings/project/limits', result['error'])
+        self.assertNotIn('private provider details', result['error'])
+
     def test_empty_ocr_skips_provider(self):
         client = Mock()
         result = IngredientPostProcessor(client).postprocess([])

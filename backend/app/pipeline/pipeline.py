@@ -8,10 +8,10 @@ from app.pipeline.postprocessor import IngredientPostProcessor
 
 class IngredientPipeline:
 
-    def __init__(self):
+    def __init__(self, post_processor=None):
         self.detector = IngredientDetector()
         self.ocr = IngredientOCR()
-        self.post_processor = IngredientPostProcessor()
+        self.post_processor = post_processor if post_processor is not None else IngredientPostProcessor()
 
         print("✅ Ingredient Pipeline Initialized with YOLO + PaddleOCR + GroqLLM")
 

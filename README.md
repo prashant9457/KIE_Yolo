@@ -15,7 +15,7 @@ Copy-Item backend/.env.example backend/.env
 ```
 
 Set `GROQ_API_KEY` in `backend/.env`. `GROQ_MODEL` defaults to
-`llama-3.1-8b-instant`. `CORS_ORIGINS` lists allowed frontend origins.
+`openai/gpt-oss-20b`. `CORS_ORIGINS` lists allowed frontend origins.
 
 Start the backend:
 
@@ -40,15 +40,27 @@ when the Groq key is missing or the provider fails.
 
 ## Architecture
 
-- `frontend/src/hooks/useExtraction.js`: workflow state, cancellation, and actions.
-- `frontend/src/services/api.js`: HTTP requests and response errors.
-- `frontend/src/services/annotations.js`: canvas annotations.
-- `frontend/src/components/`: presentation and file interaction.
+- `frontend/src/app/`: application shell and page navigation.
+- `frontend/src/pages/home/`: pipeline explanation, playback, and graphic.
+- `frontend/src/pages/extract/`: three-panel extraction page and its components.
+- `frontend/src/components/`: shared controls, header, and footer.
+- `frontend/src/hooks/`: request state, image selection, and walkthrough lifecycle.
+- `frontend/src/services/`: HTTP transport, extraction preparation, annotations,
+  image validation, and response normalization.
+- `frontend/src/utils/`: shared download helpers.
 - `backend/app/api/routes.py`: HTTP input validation and response codes.
+- `backend/app/images.py`: image header checks and decoding before inference.
 - `backend/app/schemas.py`: typed request and response contracts.
 - `backend/app/services.py`: lazy model lifecycle and serialized predictor access.
 - `backend/app/pipeline/`: detection, OCR, Groq adapters, and orchestration.
 - `backend/app/config.py`: environment and application settings.
+
+The home page is `/#/`; ingredient extraction is `/#/extract`. The legacy
+`/#/workspace` link remains supported. Navigating between pages preserves the
+current extraction. Custom prompt results stay separate from the original result.
+The main result and its exports show ingredients; OCR regions remain internal to
+the pipeline and API. The walkthrough supports pause, skip, reduced motion, and
+background-tab suspension.
 
 Images remain in memory. Uploads are limited to 10 MB and decoded images to
 25 million pixels. YOLO uses the selected confidence threshold and returns actual
@@ -59,7 +71,7 @@ model workers.
 ## API
 
 - `GET /health`: process liveness, without loading models or checking providers.
-- `POST /extract`: multipart `file`, `confidence` (0.1?0.9, default 0.45), and
+- `POST /extract`: multipart `file`, `confidence` (0.1-0.9, default 0.45), and
   optional `custom_prompt`. Returns `detected_regions` and `llm_post_process`.
 - `POST /postprocess`: JSON `ocr_results` and optional `custom_prompt`, without
   rerunning OCR. Each region has `box_id`, `bbox`, `text`, `confidence`, `class_id`.
@@ -79,7 +91,10 @@ npm run lint
 npm test
 ```
 
-Tests mock inference and provider calls; model accuracy requires real package
+Frontend tests include React hooks in JSDOM, cancellation, file validation,
+annotation failures, exports, and playback. Backend tests cover HTTP validation,
+image limits, model lifecycle, and provider failures. Tests mock inference and
+provider calls; model accuracy requires real package
 images. `pipeline.ipynb` preserves the Colab experiments. The historical research
 notes below describe earlier models; runtime model selection uses `GROQ_MODEL`.
 

@@ -1,10 +1,9 @@
 """HTTP validation and transport; inference is delegated to services."""
 import logging
-import cv2
-import numpy as np
 from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from starlette.concurrency import run_in_threadpool
-from app.config import MAX_IMAGE_PIXELS, MAX_UPLOAD_BYTES
+from app.config import MAX_UPLOAD_BYTES
+from app.images import decode_image, InvalidImage, ImageTooLarge
 from app.schemas import ExtractionResult, LLMResult, PostProcessRequest
 
 router = APIRouter()
@@ -34,13 +33,11 @@ async def extract_ingredients(
     if not contents:
         raise HTTPException(400, 'Image is empty.')
     try:
-        image = await run_in_threadpool(cv2.imdecode, np.frombuffer(contents, np.uint8), cv2.IMREAD_COLOR)
-    except cv2.error:
-        raise HTTPException(400, 'Invalid image data.')
-    if image is None:
-        raise HTTPException(400, 'Invalid image. Upload a PNG or JPEG image.')
-    if image.shape[0] * image.shape[1] > MAX_IMAGE_PIXELS:
-        raise HTTPException(413, 'Image must contain at most 25 million pixels.')
+        image = await run_in_threadpool(decode_image, contents)
+    except ImageTooLarge as exc:
+        raise HTTPException(413, str(exc)) from exc
+    except InvalidImage as exc:
+        raise HTTPException(400, str(exc)) from exc
     try:
         return await run_in_threadpool(request.app.state.pipeline.extract, image, confidence, custom_prompt)
     except Exception:

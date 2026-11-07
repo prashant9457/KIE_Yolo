@@ -53,6 +53,13 @@ class APITests(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
         self.service.postprocess.assert_not_called()
 
+    def test_invalid_bounding_boxes_are_rejected(self):
+        for bbox in ([-1, 0, 2, 2], [2, 2, 1, 1], [0, 0, 0, 1]):
+            response = self.client.post('/postprocess', json={'ocr_results': [
+                {'box_id': 0, 'bbox': bbox, 'text': 'salt'}]})
+            self.assertEqual(response.status_code, 422)
+        self.service.postprocess.assert_not_called()
+
     def test_internal_errors_are_not_exposed(self):
         self.service.extract.side_effect = RuntimeError('private configuration')
         with self.assertLogs('app.api.routes', level='ERROR'):
