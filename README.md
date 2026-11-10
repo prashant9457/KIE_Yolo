@@ -56,6 +56,8 @@ Deploy the frontend and API as separate Render services from this repository.
 - Health Check Path: `/health`
 - Python version: `backend/.python-version` pins the service to Python 3.12 for
   the PaddlePaddle 3.0.0 wheel.
+- Inference uses CPU-only PyTorch and TorchVision wheels; YOLO is explicitly
+  assigned to the CPU so Render does not install or attempt to use CUDA.
 
 Set these variables in the backend service's environment settings. Keep secret
 values in Render's environment settings, not in this repository:

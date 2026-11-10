@@ -18,6 +18,7 @@ class IngredientDetector:
             source=source,
             conf=conf,
             iou=iou,
+            device="cpu",
             verbose=False
         )
 

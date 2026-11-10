@@ -4,6 +4,10 @@ python-multipart>=0.0.6
 pydantic>=2.0
 numpy>=1.23.0
 opencv-python>=4.7.0.0
+# Inference runs on CPU in the Render service; avoid downloading CUDA runtimes.
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0+cpu
+torchvision==0.29.2+cpu
 ultralytics>=8.0.0
 paddleocr==2.10.0
 paddlepaddle==3.0.0
