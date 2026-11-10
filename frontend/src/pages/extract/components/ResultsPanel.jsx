@@ -1,147 +1,209 @@
-import { useState } from 'react';
-import { Check, Copy, Download, Leaf, Send } from 'lucide-react';
-import { getResponseView } from '../../../services/responseView';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { CheckIcon, CopyIcon, DownloadSimpleIcon, CaretDownIcon } from '@phosphor-icons/react';
+import Tabs from '../../../components/common/Tabs';
+import Button from '../../../components/ui/Button';
+import Notice from '../../../components/ui/Notice';
+import Surface from '../../../components/ui/Surface';
+import { getIngredientSummary } from '../../../services/ingredients';
+import { formatResult, getResultExport } from '../../../services/resultExport';
+import { useResultActions } from '../../../hooks/useResultActions';
 import { downloadText } from '../../../utils/download';
 import IngredientList from './IngredientList';
-import EmptyState from '../../../components/common/EmptyState';
-import Tabs from '../../../components/common/Tabs';
+import ChatPanel from './ChatPanel';
+import './ResultsPanel.css';
 
 const TABS = [
   { id: 'ingredients', name: 'Ingredients' },
+  { id: 'custom', name: 'AI chatbot' },
   { id: 'api', name: 'API response' },
-  { id: 'custom', name: 'Custom prompt' },
 ];
 
 export default function ResultsPanel({
   results,
   customResult,
-  isLoading,
+  messages = [],
   isLLMLoading,
-  prompt,
-  setPrompt,
+  isTranslating,
   onPostProcess,
+  onTranslate,
+  onCancel,
 }) {
   const [tab, setTab] = useState('ingredients');
-  const [copiedText, setCopiedText] = useState(null);
-  const [copyError, setCopyError] = useState('');
-  const view = getResponseView(tab, results, customResult);
-  const { response: llm, summary, content: exportValue, hasContent } = view;
-  const busy = isLoading || (tab === 'custom' && isLLMLoading);
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(exportValue);
-      setCopiedText(exportValue);
-      setCopyError('');
-    } catch {
-      setCopyError('Clipboard unavailable. Use Download instead.');
-    }
-  };
-  const download = () => downloadText(view.content, view.filename, view.mime);
-
+  const [language, setLanguage] = useState('original');
+  const [copyFormat, setCopyFormat] = useState('json');
+  const [formatMenuOpen, setFormatMenuOpen] = useState(false);
+  const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const copyMenu = useRef(null);
+  const saveMenu = useRef(null);
+  const id = useId();
+  const contentId = `${id}-content`;
+  const result = results?.json.llm_post_process;
+  const summary = useMemo(() => getIngredientSummary(result?.structured), [result?.structured]);
+  const view = getResultExport(tab, results, customResult, language, messages);
+  const copyViews = useMemo(
+    () => ({
+      json: { ...view, content: formatResult(view, 'json') },
+      csv: { ...view, content: formatResult(view, 'csv') },
+      txt: { ...view, content: formatResult(view, 'txt') },
+    }),
+    [view],
+  );
+  const { copy: copyJson, copyState } = useResultActions(view, copyViews.json);
+  const { copy: copyCsv } = useResultActions(view, copyViews.csv);
+  const { copy: copyTxt } = useResultActions(view, copyViews.txt);
+  const copyActions = { json: copyJson, csv: copyCsv, txt: copyTxt };
+  const busy = Boolean(isLLMLoading || isTranslating);
+  useEffect(() => {
+    if (!formatMenuOpen) return;
+    const closeOnOutsideClick = (event) => {
+      if (!copyMenu.current?.contains(event.target)) setFormatMenuOpen(false);
+      if (!saveMenu.current?.contains(event.target)) setSaveMenuOpen(false);
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setFormatMenuOpen(false);
+      if (event.key === 'Escape') setSaveMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [formatMenuOpen, saveMenuOpen]);
   return (
-    <section className="results-panel panel" aria-label="Ingredients and API responses">
-      <div className="panel-top">
-        <span className="panel-number">03</span>
-        <h2>Ingredients</h2>
-      </div>
+    <Surface className="results-panel panel" aria-label="Ingredients and label assistant">
+      <header className="results-header">
+        <h2>Results</h2>
+        <span className={`result-status ${result?.error ? 'result-status--error' : ''}`}>
+          {result?.error ? 'Needs review' : 'Analysis complete'}
+        </span>
+      </header>
       <Tabs
         items={TABS}
         value={tab}
-        onChange={(value) => {
-          setTab(value);
-          setCopyError('');
-        }}
-        controls="result-content"
-        label="Response view"
+        onChange={setTab}
+        label="Result view"
+        controls={contentId}
+        idPrefix={`${id}-tab`}
       />
-      {tab === 'custom' && (
-        <form
-          className="prompt-editor"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onPostProcess();
-          }}
-        >
-          <label htmlFor="custom-prompt">Instructions for the extracted label</label>
-          <textarea
-            id="custom-prompt"
-            maxLength={10000}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            placeholder="For example: identify allergens in this label"
-          />
-          <button
-            className="secondary-button"
-            disabled={!results || isLoading || isLLMLoading || !prompt.trim()}
-            type="submit"
-          >
-            {isLLMLoading ? <span className="spinner" /> : <Send size={13} />}
-            {isLLMLoading ? 'Running...' : 'Run prompt'}
-          </button>
-        </form>
-      )}
       <div
-        id="result-content"
-        className="result-content"
+        id={contentId}
         role="tabpanel"
-        aria-labelledby={`tab-${tab}`}
-        aria-busy={busy}
+        aria-labelledby={`${id}-tab-${tab}`}
+        className={`result-content ${tab === 'custom' ? 'chat-content' : ''}`}
+        aria-busy={tab === 'custom' ? isLLMLoading : isTranslating}
       >
-        {busy ? (
-          <EmptyState loading title={isLoading ? 'Processing your image' : 'Running custom prompt'}>
-            Your response will appear here.
-          </EmptyState>
-        ) : !hasContent ? (
-          <EmptyState icon={Leaf} title={tab === 'custom' ? 'Custom response' : 'No results yet'}>
-            {tab === 'custom'
-              ? results
-                ? 'Run your prompt to analyze the extracted text.'
-                : 'Extract an image first, then run your prompt.'
-              : 'Upload an image and click Extract ingredients.'}
-          </EmptyState>
-        ) : tab === 'ingredients' ? (
-          <IngredientList summary={summary} error={llm?.error} />
+        {tab === 'ingredients' ? (
+          <IngredientList
+            summary={summary}
+            structured={result?.structured}
+            error={result?.error}
+            language={language}
+            onLanguageChange={setLanguage}
+            onTranslate={onTranslate}
+            isTranslating={isTranslating}
+          />
+        ) : tab === 'custom' ? (
+          <ChatPanel
+            messages={messages}
+            pending={isLLMLoading}
+            disabled={busy}
+            onSend={onPostProcess}
+            onCancel={onCancel}
+          />
         ) : (
           <div className="api-output">
-            {llm?.error && (
-              <p className="provider-error" role="alert">
-                {llm.error}
-              </p>
-            )}
-            <div className="response-caption">
-              {tab === 'custom' ? 'Custom API response' : 'Ingredient API response'}
-              {llm?.model && <span>{llm.model}</span>}
-            </div>
-            <pre className="json-output">{exportValue}</pre>
+            {result?.error && <Notice>{result.error}</Notice>}
+            <p className="api-caption">Structured extraction output</p>
+            <pre className="json-output">{JSON.stringify(result, null, 2)}</pre>
           </div>
         )}
       </div>
-      <div className="result-tools">
-        <span role="status">
-          {copyError ||
-            (hasContent
-              ? 'AI output should be checked against the original label.'
-              : 'Results stay linked to the uploaded image.')}
-        </span>
-        <button
-          className="icon-button"
-          disabled={!view.canExport || busy}
-          onClick={copy}
-          aria-label="Copy current response"
-          title="Copy response"
-        >
-          {copiedText === exportValue && hasContent ? <Check size={15} /> : <Copy size={15} />}
-        </button>
-        <button
-          className="icon-button"
-          disabled={!view.canExport || busy}
-          onClick={download}
-          aria-label="Download current response"
-          title="Download response"
-        >
-          <Download size={15} />
-        </button>
-      </div>
-    </section>
+      {copyState === 'error' && (
+        <p className="result-copy-error" role="status">
+          Clipboard unavailable. Save the result instead.
+        </p>
+      )}
+      <footer className="result-tools">
+        <span className="result-note">Check the original label for allergens.</span>
+        <div role="group" aria-label="Result actions">
+          <div className="copy-menu" ref={copyMenu}>
+            <div className="copy-split-button">
+              <Button
+                className="copy-split-button__action"
+                variant="ghost"
+                size="sm"
+                disabled={!view.canExport || busy}
+                onClick={() => setFormatMenuOpen((open) => !open)}
+                aria-haspopup="menu"
+                aria-expanded={formatMenuOpen}
+                aria-label="Copy"
+              >
+                {copyState === 'copied' ? <CheckIcon size={15} /> : <CopyIcon size={15} />}
+                {copyState === 'copied' ? 'Copied' : 'Copy'}
+                <CaretDownIcon size={13} />
+              </Button>
+            </div>
+            {formatMenuOpen && (
+              <div className="copy-format-menu" role="menu" aria-label="Copy format">
+                {['json', 'csv', 'txt'].map((format) => (
+                  <button
+                    key={format}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={copyFormat === format}
+                    onClick={async () => {
+                      setCopyFormat(format);
+                      setFormatMenuOpen(false);
+                      await copyActions[format]();
+                    }}
+                  >
+                    {format.toUpperCase()}
+                    {copyFormat === format && <CheckIcon size={14} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="copy-menu" ref={saveMenu}>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={!view.canExport || busy}
+              onClick={() => setSaveMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={saveMenuOpen}
+              aria-label="Save"
+            >
+              <DownloadSimpleIcon size={15} />
+              Save
+              <CaretDownIcon size={13} />
+            </Button>
+            {saveMenuOpen && (
+              <div className="copy-format-menu" role="menu" aria-label="Save format">
+                {['json', 'csv', 'txt'].map((format) => (
+                  <button
+                    key={format}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      const output = { ...view, content: formatResult(view, format) };
+                      downloadText(
+                        output.content,
+                        output.filename.replace(/\.[^.]+$/, `.${format}`),
+                        format === 'json' ? 'application/json' : 'text/plain',
+                      );
+                      setSaveMenuOpen(false);
+                    }}
+                  >
+                    {format.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </footer>
+    </Surface>
   );
 }

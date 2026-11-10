@@ -1,4 +1,8 @@
-export default function Tabs({ items, value, onChange, controls, label }) {
+import { useId } from 'react';
+import { motion } from 'motion/react';
+
+export default function Tabs({ items, value, onChange, controls, label, idPrefix = 'tab' }) {
+  const layoutId = useId();
   const changeByKey = (event) => {
     const index = items.findIndex((item) => item.id === value);
     const next = {
@@ -10,22 +14,32 @@ export default function Tabs({ items, value, onChange, controls, label }) {
     if (next === undefined) return;
     event.preventDefault();
     onChange(items[next].id);
-    event.currentTarget.querySelector(`#tab-${items[next].id}`)?.focus();
+    event.currentTarget.querySelector(`[id="${idPrefix}-${items[next].id}"]`)?.focus();
   };
   return (
-    <div className="result-tabs" role="tablist" aria-label={label} onKeyDown={changeByKey}>
+    <div className="tabs" role="tablist" aria-label={label} onKeyDown={changeByKey}>
       {items.map((item) => (
         <button
           key={item.id}
-          id={`tab-${item.id}`}
+          id={`${idPrefix}-${item.id}`}
+          type="button"
           role="tab"
           aria-selected={value === item.id}
           aria-controls={controls}
           tabIndex={value === item.id ? 0 : -1}
-          className={value === item.id ? 'active' : ''}
+          className="tab"
           onClick={() => onChange(item.id)}
         >
-          {item.name}
+          {value === item.id && (
+            <motion.span
+              className="tab__active"
+              layoutId={layoutId}
+              transition={{ type: 'spring', stiffness: 400, damping: 38 }}
+            />
+          )}
+          <span className={`tab__label ${item.id === 'custom' ? 'tab__chat' : ''}`}>
+            {item.name}
+          </span>
         </button>
       ))}
     </div>

@@ -1,93 +1,91 @@
-import { useState } from 'react';
-import { RotateCcw, Sparkles } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import Surface from '../../components/ui/Surface';
+import Notice from '../../components/ui/Notice';
+import ClearExtractionButton from '../../components/ui/ClearExtractionButton';
 import ImageUpload from './components/ImageUpload';
+import ExtractionSettings from './components/ExtractionSettings';
+import ProcessingState from './components/ProcessingState';
 import LabelledOutput from './components/LabelledOutput';
 import ResultsPanel from './components/ResultsPanel';
 import './extract.css';
 
 export default function ExtractPage({ flow, active }) {
-  const [mobilePanel, setMobilePanel] = useState('upload');
-  const busy = flow.isLoading || flow.isLLMLoading;
+  const ready = Boolean(flow.results) && !flow.isLoading;
+  const heading = useRef(null);
+  useEffect(() => {
+    if (ready && active) heading.current?.focus({ preventScroll: true });
+  }, [ready, active]);
   return (
-    <main className="main-shell" hidden={!active}>
+    <main
+      className="main-shell extraction-page"
+      id={active ? 'main-content' : undefined}
+      tabIndex={-1}
+      hidden={!active}
+    >
       {flow.error && (
-        <div className="error-banner" role="alert">
+        <Notice className="extraction-error" onDismiss={() => flow.setError('')}>
           {flow.error}
-          <button className="text-button" onClick={() => flow.setError('')}>
-            Dismiss
-          </button>
+        </Notice>
+      )}
+      <header className="extraction-heading">
+        <div>
+          <h1 ref={heading} tabIndex={-1}>
+            {ready ? 'Your results' : 'Extract ingredients'}
+          </h1>
+          <p>
+            {ready
+              ? 'Explore the ingredients, switch languages, or ask about your label.'
+              : 'Start with a clear image of the ingredients on your package.'}
+          </p>
+        </div>
+        {flow.image && !flow.isLoading && (
+          <ClearExtractionButton onClear={flow.handleReset} disabled={flow.isBusy} />
+        )}
+      </header>
+      {flow.isLoading ? (
+        <ProcessingState image={flow.image} onCancel={flow.handleCancel} />
+      ) : (
+        <div className={`workspace ${ready ? 'workspace-results' : 'workspace-upload'}`}>
+          {ready ? (
+            <>
+              <LabelledOutput
+                key={`image-${flow.image}`}
+                active={active}
+                results={flow.results}
+                image={flow.image}
+                onDownload={flow.handleDownloadImage}
+                file={flow.file}
+              />
+              <ResultsPanel
+                key={`results-${flow.image}`}
+                results={flow.results}
+                customResult={flow.customResult}
+                messages={flow.messages}
+                isLLMLoading={flow.isLLMLoading}
+                isTranslating={flow.isTranslating}
+                onPostProcess={flow.handlePostProcess}
+                onTranslate={flow.handleTranslate}
+                onCancel={flow.handleCancel}
+              />
+            </>
+          ) : (
+            <Surface className="upload-panel panel" aria-label="Upload and extraction controls">
+              <ImageUpload
+                image={flow.image}
+                file={flow.file}
+                onSelect={flow.handleImageSelected}
+                onError={flow.setError}
+              />
+              <ExtractionSettings
+                confidence={flow.confidence}
+                onConfidenceChange={flow.setConfidence}
+                hasImage={Boolean(flow.image)}
+                onExtract={flow.handleExtract}
+              />
+            </Surface>
+          )}
         </div>
       )}
-      <div className="mobile-switch" aria-label="Extraction panel">
-        {['upload', 'labelled', 'response'].map((panel) => (
-          <button
-            key={panel}
-            className={mobilePanel === panel ? 'selected' : ''}
-            onClick={() => setMobilePanel(panel)}
-          >
-            {panel === 'upload' ? 'Upload' : panel === 'labelled' ? 'Labelled output' : 'Response'}
-          </button>
-        ))}
-      </div>
-      <div className={`workspace mobile-${mobilePanel}`}>
-        <section className="upload-panel panel" aria-label="Upload and extraction controls">
-          <div className="panel-top">
-            <span className="panel-number">01</span>
-            <h1>Upload</h1>
-            <span className="panel-subtitle">Source image</span>
-          </div>
-          <ImageUpload
-            image={flow.image}
-            file={flow.file}
-            onSelect={flow.handleImageSelected}
-            onError={flow.setError}
-          />
-          <div className="upload-controls">
-            <label htmlFor="confidence">
-              Detection confidence <strong>{Math.round(flow.confidence * 100)}%</strong>
-            </label>
-            <input
-              id="confidence"
-              type="range"
-              min="0.1"
-              max="0.9"
-              step="0.05"
-              value={flow.confidence}
-              onChange={(event) => flow.setConfidence(Number(event.target.value))}
-              disabled={busy}
-            />
-            <p>Lower the threshold to detect more text regions.</p>
-            <button
-              className="primary-button"
-              disabled={!flow.image || busy}
-              onClick={flow.handleExtract}
-            >
-              {flow.isLoading ? <span className="spinner" /> : <Sparkles size={16} />}
-              {flow.isLoading ? 'Extracting...' : 'Extract ingredients'}
-            </button>
-            {flow.image && (
-              <button className="clear-button" onClick={flow.handleReset}>
-                <RotateCcw size={13} />
-                Clear extraction
-              </button>
-            )}
-          </div>
-        </section>
-        <LabelledOutput
-          results={flow.results}
-          isLoading={flow.isLoading}
-          onDownload={flow.handleDownloadImage}
-        />
-        <ResultsPanel
-          results={flow.results}
-          customResult={flow.customResult}
-          isLoading={flow.isLoading}
-          isLLMLoading={flow.isLLMLoading}
-          prompt={flow.customPrompt}
-          setPrompt={flow.setCustomPrompt}
-          onPostProcess={flow.handlePostProcess}
-        />
-      </div>
     </main>
   );
 }

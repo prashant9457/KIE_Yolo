@@ -1,0 +1,219 @@
+.results-panel > .surface-core {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px 16px;
+  flex-shrink: 0;
+}
+.results-header h2 {
+  font-size: var(--text-body);
+  font-weight: 600;
+}
+.result-status {
+  color: var(--color-secondary);
+  font-size: 11px;
+}
+.result-status--error {
+  color: var(--color-error);
+}
+.results-panel .tabs {
+  padding: 0 18px 18px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+.results-panel .tab {
+  flex: 1;
+  padding-inline: 12px;
+  font-size: 12px;
+}
+.result-content {
+  flex: 1;
+  min-height: 0;
+  padding: 0 22px 18px;
+  display: flex;
+  flex-direction: column;
+}
+.result-content[aria-label] {
+  outline-offset: -2px;
+}
+.result-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px 12px 22px;
+  box-shadow: 0 -1px 0 var(--color-canvas);
+  flex-shrink: 0;
+}
+.result-tools > div {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.copy-menu {
+  position: relative;
+}
+.copy-split-button {
+  display: inline-flex;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.copy-split-button__action.button {
+  gap: 7px;
+  border-radius: 0;
+}
+.copy-format-label {
+  padding-left: 7px;
+  border-left: 1px solid var(--color-line);
+  color: var(--color-muted);
+  font-size: 10px;
+  font-weight: 600;
+}
+.copy-split-button__toggle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  color: var(--color-secondary);
+  background: transparent;
+  box-shadow: inset 1px 0 0 var(--color-line);
+  transition: background var(--duration-fast) var(--ease-out);
+}
+.copy-split-button__toggle:hover:not(:disabled) {
+  color: var(--color-text);
+  background: var(--color-canvas);
+}
+.copy-split-button__toggle:focus-visible,
+.copy-format-menu button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.copy-split-button__toggle:disabled {
+  opacity: 0.48;
+}
+.copy-format-menu {
+  position: absolute;
+  z-index: var(--layer-popover);
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  min-width: 124px;
+  padding: 5px;
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  box-shadow:
+    0 4px 18px rgb(32 33 36 / 12%),
+    inset 0 0 0 1px var(--color-line);
+}
+.copy-format-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: var(--color-text);
+  background: transparent;
+  text-align: left;
+  font-size: var(--text-xs);
+}
+.copy-format-menu button:hover {
+  background: var(--color-subtle);
+}
+.copy-format-menu button[aria-checked='true'] {
+  color: var(--color-accent);
+}
+.result-note {
+  color: var(--color-secondary);
+  font-size: 10px;
+  line-height: 1.7;
+  max-width: 24ch;
+}
+.result-copy-error {
+  padding: 0 22px 12px;
+  font-size: var(--text-xs);
+  color: var(--color-error);
+}
+.api-output {
+  overflow: auto;
+  padding: 4px 0;
+}
+.api-output .notice {
+  margin-bottom: 16px;
+}
+.api-caption {
+  color: var(--color-secondary);
+  font-size: var(--text-xs);
+  margin: 4px 0 12px;
+}
+.json-output {
+  margin: 0;
+  padding: 18px;
+  background: var(--color-subtle);
+  border-radius: var(--radius-control);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 1100px) and (min-width: 768px) {
+  .results-panel .tabs {
+    gap: 6px;
+    padding-inline: 14px;
+  }
+  .results-panel .tab {
+    font-size: 11px;
+    padding-inline: 10px;
+  }
+  .results-header {
+    padding-inline: 18px;
+  }
+  .result-content {
+    padding-inline: 18px;
+  }
+  .result-note {
+    max-width: 17ch;
+  }
+  .result-tools {
+    padding-left: 18px;
+  }
+}
+@media (max-width: 380px) {
+  .results-header {
+    padding: 18px 16px 14px;
+  }
+  .result-status {
+    font-size: 10px;
+  }
+  .results-panel .tabs {
+    padding-inline: 12px;
+    gap: 6px;
+  }
+  .results-panel .tab {
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+  .result-content {
+    padding-inline: 16px;
+  }
+  .result-tools {
+    padding: 10px 12px 10px 16px;
+  }
+  .result-note {
+    max-width: 18ch;
+    font-size: 9px;
+  }
+  .result-tools .button {
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+}

@@ -1,7 +1,7 @@
 # Ingredient Extraction Pipeline
 
 React interface and FastAPI service for YOLO text detection, PaddleOCR transcription,
-and ingredient identification with Groq. Supports custom prompts, annotated images,
+and ingredient identification with Groq through LangChain. Supports custom prompts, annotated images,
 and JSON exports.
 
 ## Setup (PowerShell)
@@ -41,10 +41,12 @@ when the Groq key is missing or the provider fails.
 ## Architecture
 
 - `frontend/src/app/`: application shell and page navigation.
-- `frontend/src/pages/home/`: pipeline explanation, playback, and graphic.
-- `frontend/src/pages/extract/`: three-panel extraction page and its components.
-- `frontend/src/components/`: shared controls, header, and footer.
-- `frontend/src/hooks/`: request state, image selection, and walkthrough lifecycle.
+- `frontend/src/pages/home/`: product overview, sample package, and keyboard-accessible walkthrough.
+- `frontend/src/pages/extract/`: upload workspace, zoomable image, ingredient results, and chat.
+- `frontend/src/styles/`: shared design tokens, typography, base styles, and vendor adapters.
+- `frontend/src/components/ui/`: reusable controls and surfaces.
+- `frontend/src/components/layout/`: header, feedback, and footer.
+- `frontend/src/hooks/`: request state, cancellation, image geometry, chat scrolling, and clipboard lifecycle.
 - `frontend/src/services/`: HTTP transport, extraction preparation, annotations,
   image validation, and response normalization.
 - `frontend/src/utils/`: shared download helpers.
@@ -55,14 +57,40 @@ when the Groq key is missing or the provider fails.
 - `backend/app/pipeline/`: detection, OCR, Groq adapters, and orchestration.
 - `backend/app/config.py`: environment and application settings.
 
+The extraction screen starts with upload controls and a Comet Dial for confidence.
+During extraction a page overlay uses Thought Line; the labelled image and results
+appear when the request finishes. Hold the clear button for 1.2 seconds to reset.
+Results use Animated List, Glide Select, Prompt Bar, and accessible Motion-backed tabs.
+The image viewer uses react-zoom-pan-pinch for scroll, pinch, and drag controls.
+Motion animates larger cursors arriving from screen edges, then dragging each
+detection from its top-left to its bottom-right corner. Replay restarts the draw;
+zooming or panning completes the overlay so annotations stay attached to the image.
+The AI chatbot tab answers label questions with bounded conversation
+context. Pulse Heart and Peek Rating start at zero and keep feedback only in the
+current page session. Vendored components and their license are in
+`frontend/src/components/reactbits/`.
+
+Default extraction requests translations in English (`en`), Hindi (`hi`), Spanish
+(`es`), French (`fr`), German (`de`), and Arabic (`ar`). The `translations` object
+maps language codes to arrays matching ingredient order and count. All six
+languages are required by the backend schema; invalid responses are retried once.
+The selector always lists every language. Selecting a missing translation in an
+existing extraction requests fresh multilingual output without rerunning OCR.
+
 The home page is `/#/`; ingredient extraction is `/#/extract`. The legacy
 `/#/workspace` link remains supported. Navigating between pages preserves the
-current extraction. Custom prompt results stay separate from the original result.
+current extraction. Chatbot results stay separate from the original ingredient result.
 The main result and its exports show ingredients; OCR regions remain internal to
-the pipeline and API. The walkthrough supports pause, skip, reduced motion, and
-background-tab suspension.
+the pipeline and API. The walkthrough supports direct selection and keyboard navigation.
+The frontend uses a shared light design system and self-hosted typography; see
+`frontend/docs/design-system.md` for implementation notes.
 
-Images remain in memory. Uploads are limited to 10 MB and decoded images to
+Images remain in memory. There is currently no database, extraction history, or persistence layer.
+Default LLM output is validated with a Pydantic ingredient schema through LangChain;
+custom prompts retain flexible JSON objects. Invalid output returns an error while
+preserving OCR regions. Prompt templates keep OCR data separate from instructions.
+
+Uploads are limited to 10 MB and decoded images to
 25 million pixels. YOLO uses the selected confidence threshold and returns actual
 confidence and class metadata. Shared predictor access is serialized per process;
 blocking extraction runs in a worker thread. Higher throughput needs dedicated
@@ -92,7 +120,7 @@ npm test
 ```
 
 Frontend tests include React hooks in JSDOM, cancellation, file validation,
-annotation failures, exports, and playback. Backend tests cover HTTP validation,
+annotation failures, multilingual exports, chat context, and keyboard navigation. Backend tests cover HTTP validation,
 image limits, model lifecycle, and provider failures. Tests mock inference and
 provider calls; model accuracy requires real package
 images. `pipeline.ipynb` preserves the Colab experiments. The historical research

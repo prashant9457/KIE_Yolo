@@ -1,4 +1,5 @@
 import unittest
+import json
 from unittest.mock import Mock, MagicMock, patch
 from app.pipeline.postprocessor import IngredientPostProcessor
 import httpx
@@ -27,7 +28,7 @@ class PostProcessorTests(unittest.TestCase):
 
     def test_response_and_prompt_boundary(self):
         client = MagicMock()
-        client.chat.completions.create.return_value.choices[0].message.content = '{"text":"salt"}'
+        client.chat.completions.create.return_value = self.completion('{"text":"salt"}')
         result = IngredientPostProcessor(client).postprocess(
             [{'box_id': 0, 'bbox': [0, 0, 1, 1], 'text': 'salt'}], 'Return ingredients')
         self.assertEqual(result['structured'], {'text': 'salt'})
@@ -35,6 +36,49 @@ class PostProcessorTests(unittest.TestCase):
         call = client.chat.completions.create.call_args.kwargs
         self.assertIn('JSON', call['messages'][0]['content'])
         self.assertIn('"box_number": 1', call['messages'][1]['content'])
+
+    @staticmethod
+    def completion(content):
+        return {
+            'choices': [{'message': {'role': 'assistant', 'content': content}, 'finish_reason': 'stop'}],
+            'model': 'test-model',
+        }
+
+    def test_default_output_is_validated(self):
+        client = Mock()
+        client.chat.completions.create.return_value = self.completion(
+            json.dumps({'ingredients': ['salt'], 'postprocessed_corrected_text': 'Ingredients: salt',
+                        'translations': {code: ['salt'] for code in ['en', 'hi', 'es', 'fr', 'de', 'ar']}}))
+        result = IngredientPostProcessor(client).postprocess(
+            [{'box_id': 0, 'bbox': [0, 0, 1, 1], 'text': 'salt'}])
+        self.assertIsNone(result['error'])
+        self.assertEqual(result['structured']['ingredients'], ['salt'])
+
+    def test_invalid_default_outputs_preserve_raw_response(self):
+        for raw in ['{"ingredients": [42], "postprocessed_corrected_text": "salt"}',
+                    '{"text":"salt"}', '[]', '{"ingredients": ["salt"]']:
+            with self.subTest(raw=raw):
+                client = Mock()
+                client.chat.completions.create.return_value = self.completion(raw)
+                result = IngredientPostProcessor(client).postprocess(
+                    [{'box_id': 0, 'bbox': [0, 0, 1, 1], 'text': 'salt'}])
+                self.assertIn('invalid structured output', result['error'])
+                self.assertEqual(result['raw_response'], raw)
+                self.assertEqual(result['structured'], {})
+
+    def test_missing_translations_are_retried_and_required(self):
+        client = Mock()
+        valid = {'ingredients': ['salt'], 'postprocessed_corrected_text': 'Salt',
+                 'translations': {code: ['salt'] for code in ['en', 'hi', 'es', 'fr', 'de', 'ar']}}
+        client.chat.completions.create.side_effect = [
+            self.completion('{"ingredients":["salt"],"postprocessed_corrected_text":"Salt"}'),
+            self.completion(json.dumps(valid)),
+        ]
+        result = IngredientPostProcessor(client).postprocess(
+            [{'box_id': 0, 'bbox': [0, 0, 1, 1], 'text': 'salt'}])
+        self.assertIsNone(result['error'])
+        self.assertEqual(set(result['structured']['translations']), {'en', 'hi', 'es', 'fr', 'de', 'ar'})
+        self.assertEqual(client.chat.completions.create.call_count, 2)
 
     def test_provider_failure_preserves_result_contract(self):
         client = Mock()

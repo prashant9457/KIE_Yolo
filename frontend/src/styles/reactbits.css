@@ -1,0 +1,90 @@
+/* Theme adapters for vendored components. Application layout belongs to its owning component. */
+.rb-select .glide-select__trigger {
+  box-shadow:
+    inset 0 0 0 1px var(--color-line),
+    0 1px 2px rgb(32 33 36 / 2%);
+  background: var(--color-surface);
+  padding-inline: 12px;
+  gap: 12px;
+  border-radius: var(--radius-control);
+  height: 40px;
+  font-size: 12px;
+}
+.rb-select .glide-select__trigger:hover {
+  box-shadow: inset 0 0 0 1px var(--color-outline);
+}
+.rb-select .glide-select__menu {
+  box-shadow:
+    inset 0 0 0 1px var(--color-line),
+    var(--shadow-floating);
+  z-index: var(--layer-menu);
+}
+.rb-select .glide-select__option {
+  font-size: 13px;
+}
+.rb-select .glide-select__list {
+  max-height: 320px;
+  overflow: auto;
+}
+.chat-composer .prompt-bar {
+  padding: 5px;
+  border-radius: var(--radius-inner);
+  background: var(--color-canvas);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.chat-composer .prompt-bar__field {
+  border-radius: calc(var(--radius-inner) - 4px);
+  box-shadow: none;
+}
+.chat-composer .prompt-bar__input {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.8;
+  padding: 0;
+}
+.chat-composer .prompt-bar__input::placeholder {
+  color: var(--color-secondary);
+}
+.chat-composer .prompt-bar__input:focus-visible {
+  outline: none;
+}
+.chat-composer .prompt-bar:focus-within {
+  box-shadow: inset 0 0 0 1px var(--color-accent);
+}
+.chat-composer .prompt-bar__send {
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  color: var(--color-muted);
+  background: var(--color-canvas);
+}
+.chat-composer .prompt-bar__send[data-armed] {
+  background: var(--color-accent);
+  color: var(--color-onAccent);
+}
+.chat-composer .prompt-bar__sparks,
+.chat-composer .prompt-bar__field::before {
+  display: none;
+}
+.app-feedback .pulse-heart {
+  outline-offset: 4px;
+}
+.rb-hold {
+  font-family: var(--font-sans);
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+.rb-hold .hold-button__pulse {
+  display: none;
+}
+.rb-confidence .comet-dial__label {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+@media (max-width: 380px) {
+  .rb-select .glide-select__trigger {
+    font-size: 11px;
+    gap: 6px;
+    padding-inline: 8px;
+  }
+}

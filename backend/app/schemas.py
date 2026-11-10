@@ -3,6 +3,32 @@ from typing import Annotated, Any
 from pydantic import BaseModel, Field, field_validator
 
 Coordinate = Annotated[int, Field(ge=0)]
+IngredientName = Annotated[str, Field(strict=True, min_length=1)]
+
+class IngredientTranslations(BaseModel):
+    en: list[IngredientName]
+    hi: list[IngredientName]
+    es: list[IngredientName]
+    fr: list[IngredientName]
+    de: list[IngredientName]
+    ar: list[IngredientName]
+
+class IngredientOutput(BaseModel):
+    """Validated output for the default ingredient extraction task."""
+
+    ingredients: list[Annotated[str, Field(strict=True, min_length=1)]]
+    postprocessed_corrected_text: str
+    error: str | None = None
+    translations: IngredientTranslations = Field(description='Required translations of every ingredient in English, Hindi, Spanish, French, German and Arabic, in the original ingredient order.')
+
+    @field_validator('translations')
+    @classmethod
+    def validate_translations(cls, value, info):
+        count = len(info.data.get('ingredients', []))
+        for names in value.model_dump().values():
+            if len(names) != count:
+                raise ValueError('Translations must match ingredient count and order.')
+        return value
 
 class OCRRegion(BaseModel):
     box_id: int = Field(ge=0)

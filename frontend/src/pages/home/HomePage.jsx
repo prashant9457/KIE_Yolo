@@ -1,132 +1,35 @@
+import { motion } from 'motion/react';
+import { ArrowRightIcon } from '@phosphor-icons/react';
+import Button from '../../components/ui/Button';
+import HomePreview from './HomePreview';
+import HomeWalkthrough from './HomeWalkthrough';
 import './home.css';
-import { usePipelinePlayback } from '../../hooks/usePipelinePlayback';
-import PipelineUploadGraphic from './PipelineUploadGraphic';
-import { PIPELINE_STEPS } from './pipelineSteps';
-import { ArrowLeft, ArrowRight, Check, Leaf, Pause, Play } from 'lucide-react';
 
 export default function HomePage() {
-  const { selected, playing, fillRef, progressRef, skip, togglePlaying } = usePipelinePlayback(
-    PIPELINE_STEPS.length,
-  );
-  const stage = PIPELINE_STEPS[selected];
-  const Icon = stage.icon;
   return (
-    <main className="home-page">
+    <main className="home-page" id="main-content" tabIndex={-1}>
       <section className="home-intro">
-        <div>
-          <span className="home-eyebrow">BEHIND THE LABEL</span>
+        <motion.div
+          className="home-intro__copy"
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <h1>
-            See beyond
+            Read the label.
             <br />
-            the <span>packaging.</span>
+            Know your food.
           </h1>
-          <p className="home-tagline">Know what you eat.</p>
-        </div>
-        <a className="primary-button home-start" href="#/extract">
-          Extract ingredients <ArrowRight size={17} />
-        </a>
+          <p>
+            Find ingredients, explore six languages, and ask questions about the food in your hands.
+          </p>
+          <Button href="#/extract" variant="primary" size="lg" trailingIcon={ArrowRightIcon}>
+            Extract ingredients
+          </Button>
+        </motion.div>
+        <HomePreview />
       </section>
-      <section className="pipeline-explainer" aria-label="How ingredient extraction works">
-        <div className="pipeline-heading">
-          <div className="pipeline-title">
-            <h2>How it works</h2>
-            <span>{playing ? 'Auto-playing' : 'Walkthrough paused'}</span>
-          </div>
-          <div className="playback-controls">
-            <button
-              className="icon-button"
-              onClick={() => skip(-1)}
-              aria-label="Previous pipeline step"
-              title="Previous step"
-            >
-              <ArrowLeft size={16} />
-            </button>
-            <button
-              className="playback-toggle"
-              onClick={togglePlaying}
-              aria-label={playing ? 'Pause walkthrough' : 'Play walkthrough'}
-              title={playing ? 'Pause' : 'Play'}
-            >
-              {playing ? <Pause size={15} /> : <Play size={15} />}
-            </button>
-            <button
-              className="icon-button"
-              onClick={() => skip(1)}
-              aria-label="Next pipeline step"
-              title="Next step"
-            >
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-        <div
-          className="pipeline-timeline"
-          ref={progressRef}
-          role="progressbar"
-          aria-label={`Step ${selected + 1} of ${PIPELINE_STEPS.length}: ${stage.short}`}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuetext={`${stage.short}, step ${selected + 1} of ${PIPELINE_STEPS.length}`}
-        >
-          {PIPELINE_STEPS.map((item, index) => (
-            <div
-              className={`timeline-step ${index === selected ? 'active' : index < selected ? 'complete' : ''}`}
-              key={item.short}
-            >
-              <div className="timeline-track">
-                <span
-                  key={`${item.short}-${selected}`}
-                  ref={index === selected ? fillRef : null}
-                  style={{ transform: `scaleX(${index < selected ? 1 : 0})` }}
-                />
-              </div>
-              <div className="timeline-label">
-                <span>0{index + 1}</span>
-                {item.short}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div
-          className="pipeline-detail"
-          id="stage-detail"
-          role="region"
-          aria-label={`${stage.short}: pipeline explanation`}
-        >
-          <div className="stage-description">
-            <span className="stage-tool">
-              <Icon size={15} />
-              {stage.tool}
-            </span>
-            <h3>{stage.title}</h3>
-            <p>{stage.description}</p>
-          </div>
-          <div className="stage-example">
-            <div className="example-caption">
-              <span>Example</span>
-              <span>0{selected + 1} / 05</span>
-            </div>
-            {selected === 0 ? (
-              <PipelineUploadGraphic />
-            ) : Array.isArray(stage.example) ? (
-              <ul className="example-ingredients">
-                {stage.example.map((ingredient) => (
-                  <li key={ingredient}>
-                    <Check size={16} />
-                    {ingredient}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <pre className={selected === 1 ? 'example-detected' : ''}>{stage.example}</pre>
-            )}
-            <div className="example-footer">
-              <Leaf size={13} />
-              Sample only
-            </div>
-          </div>
-        </div>
-      </section>
+      <HomeWalkthrough />
     </main>
   );
 }

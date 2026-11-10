@@ -8,6 +8,8 @@ ultralytics>=8.0.0
 paddleocr==2.10.0
 paddlepaddle==3.0.0
 groq>=0.4.0
+langchain-core>=1.0,<2
+langchain-groq>=1.0,<2
 python-dotenv>=1.0.0
 
 pillow>=10.0

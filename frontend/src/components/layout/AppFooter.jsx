@@ -1,10 +1,8 @@
 export default function AppFooter() {
   return (
     <footer className="page-footer">
-      <span>
-        YOLO detection <span>/</span> PaddleOCR <span>/</span> Groq analysis
-      </span>
-      <span>Images processed in memory</span>
+      <span>A clearer view of your ingredients.</span>
+      <span>Your images are processed in memory, never saved.</span>
     </footer>
   );
 }
