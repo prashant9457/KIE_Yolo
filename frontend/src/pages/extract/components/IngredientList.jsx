@@ -36,7 +36,9 @@ export default function IngredientList({
       onTranslate?.();
   };
 
-  if (error)
+  const hasIngredientContent = summary.ingredients.length > 0 || Boolean(summary.text);
+
+  if (error && !hasIngredientContent)
     return (
       <div className="ingredient-error">
         <Notice>{error}</Notice>
@@ -49,6 +51,7 @@ export default function IngredientList({
     );
   return (
     <div className={`ingredient-summary ${compact ? 'ingredient-summary--compact' : ''}`}>
+      {error && <Notice>{error}</Notice>}
       <div className="ingredient-controls">
         <span className="ingredient-total">
           {summary.ingredients.length} <span>ingredients</span>

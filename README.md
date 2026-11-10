@@ -43,6 +43,50 @@ Vite proxies API requests to port 8000. Production hosting must route `/extract`
 Models load lazily, so the first extraction takes longer. OCR remains available
 when the Groq key is missing or the provider fails.
 
+## Production deployment (Render)
+
+Deploy the frontend and API as separate Render services from this repository.
+
+### Backend web service
+
+- Runtime: **Python 3**
+- Root Directory: `backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Health Check Path: `/health`
+- Python version: `backend/.python-version` pins the service to Python 3.12 for
+  the PaddlePaddle 3.0.0 wheel.
+
+Set these variables in the backend service's environment settings. Keep secret
+values in Render's environment settings, not in this repository:
+
+```text
+GROQ_API_KEY=<your Groq API key>
+GROQ_MODEL=openai/gpt-oss-20b
+MONGODB_URI=<your MongoDB Atlas URI>
+MONGODB_DATABASE=ingredient_extraction
+CORS_ORIGINS=<the deployed frontend origin>
+```
+
+Render supplies `PORT`. Do not use `python run.py` in production: that local
+entry point binds to `127.0.0.1:8000`. PaddleOCR downloads its pretrained OCR
+models the first time extraction runs, so that first request can take longer.
+
+### Frontend static site
+
+- Root Directory: `frontend`
+- Build Command: `npm ci && npm run build`
+- Publish Directory: `dist`
+- Build Environment Variable: `VITE_API_BASE_URL=<the deployed backend URL>`
+
+The API and feedback clients prepend `VITE_API_BASE_URL` to their requests.
+Leave it empty for local development, where Vite proxies requests to port 8000.
+Because Vite embeds this value in the generated frontend bundle, redeploy the
+static site after changing it. `frontend/.env.example` documents the variable.
+
+In MongoDB Atlas, allow the backend service's outbound address or configure
+private networking. Avoid allowing connections from every IP address.
+
 ## Architecture
 
 - `frontend/src/app/`: application shell and page navigation.

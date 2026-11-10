@@ -1,3 +1,5 @@
+import { apiUrl } from './apiBase.js';
+
 let fallbackClientId;
 
 function createClientId() {
@@ -22,7 +24,7 @@ export function getFeedbackClientId() {
 }
 
 async function feedbackRequest(url, options) {
-  const response = await fetch(url, options);
+  const response = await fetch(apiUrl(url), options);
   const body = await response.json();
   if (!response.ok) throw new Error(body.detail || 'Feedback could not be synced.');
   return body;

@@ -1,6 +1,8 @@
 // HTTP transport only. Image preparation and rendering live in extraction.js.
+import { apiUrl } from './apiBase.js';
+
 async function requestJSON(url, options) {
-  const response = await fetch(url, options);
+  const response = await fetch(apiUrl(url), options);
   let body;
   try {
     body = await response.json();
