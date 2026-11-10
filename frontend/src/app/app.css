@@ -112,6 +112,13 @@
   background: var(--color-subtle);
   color: var(--color-text);
 }
+.feedback-rating__average {
+  min-width: 2.1ch;
+  color: var(--color-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
 .feedback-rating__popover {
   position: absolute;
   top: calc(100% + 16px);
@@ -203,7 +210,7 @@
   .feedback-rating summary {
     padding: 8px;
   }
-  .feedback-rating summary > span {
+  .feedback-rating summary > .feedback-rating__label {
     display: none;
   }
   .page-footer {

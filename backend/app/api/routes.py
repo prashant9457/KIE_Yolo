@@ -1,10 +1,13 @@
 """HTTP validation and transport; inference is delegated to services."""
 import logging
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from uuid import UUID
+from fastapi import APIRouter, File, Form, HTTPException, Query, Request, UploadFile
 from starlette.concurrency import run_in_threadpool
+from pymongo.errors import OperationFailure, PyMongoError, ServerSelectionTimeoutError
 from app.config import MAX_UPLOAD_BYTES
+from app.feedback import FeedbackUnavailable, get_feedback_stats, update_feedback
 from app.images import decode_image, InvalidImage, ImageTooLarge
-from app.schemas import ExtractionResult, LLMResult, PostProcessRequest
+from app.schemas import ExtractionResult, FeedbackStats, FeedbackUpdate, LLMResult, PostProcessRequest
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -16,6 +19,32 @@ def root():
 @router.get('/health')
 def health():
     return {'status': 'healthy'}
+
+def _feedback_error(exc):
+    if isinstance(exc, FeedbackUnavailable):
+        detail = str(exc)
+    elif isinstance(exc, OperationFailure) and exc.code == 8000:
+        detail = 'MongoDB Atlas rejected authentication. Check the database username and password in MONGODB_URI; URL-encode reserved password characters.'
+    elif isinstance(exc, ServerSelectionTimeoutError):
+        detail = 'MongoDB timed out. Check Atlas IP access, DNS SRV resolution, and cluster availability.'
+    else:
+        logger.warning('MongoDB feedback service unavailable (%s)', type(exc).__name__)
+        detail = 'MongoDB could not be reached. Check MONGODB_URI, Atlas network access, and database user permissions.'
+    raise HTTPException(503, detail) from exc
+
+@router.get('/stats', response_model=FeedbackStats)
+def feedback_stats(client_id: UUID = Query(...)):
+    try:
+        return get_feedback_stats(str(client_id))
+    except (FeedbackUnavailable, PyMongoError) as exc:
+        _feedback_error(exc)
+
+@router.post('/feedback', response_model=FeedbackStats)
+def save_feedback(body: FeedbackUpdate):
+    try:
+        return update_feedback(body.client_id, body.liked, body.rating)
+    except (FeedbackUnavailable, PyMongoError) as exc:
+        _feedback_error(exc)
 
 @router.post('/extract', response_model=ExtractionResult)
 async def extract_ingredients(

@@ -1,6 +1,6 @@
 """Public API contracts, independent of inference libraries."""
 from typing import Annotated, Any
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 Coordinate = Annotated[int, Field(ge=0)]
 IngredientName = Annotated[str, Field(strict=True, min_length=1)]
@@ -48,6 +48,30 @@ class OCRRegion(BaseModel):
 class PostProcessRequest(BaseModel):
     ocr_results: Annotated[list[OCRRegion], Field(max_length=500)]
     custom_prompt: str | None = Field(default=None, max_length=10000)
+
+class FeedbackUpdate(BaseModel):
+    client_id: str = Field(min_length=36, max_length=36)
+    liked: bool | None = None
+    rating: int | None = Field(default=None, ge=1, le=5)
+
+    @field_validator('client_id')
+    @classmethod
+    def validate_client_id(cls, value):
+        from uuid import UUID
+        return str(UUID(value))
+
+    @model_validator(mode='after')
+    def validate_update(self):
+        if self.liked is None and self.rating is None:
+            raise ValueError('Provide a like state or a rating.')
+        return self
+
+class FeedbackStats(BaseModel):
+    likes: int = Field(ge=0)
+    rating_count: int = Field(ge=0)
+    average_rating: float | None = Field(default=None, ge=1, le=5)
+    liked: bool = False
+    rating: int | None = Field(default=None, ge=1, le=5)
 
 class LLMResult(BaseModel):
     model: str

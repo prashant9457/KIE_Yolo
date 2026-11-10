@@ -7,7 +7,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: Object.fromEntries(
-      ['/extract', '/postprocess', '/health'].map((path) => [path, apiProxy]),
+      ['/extract', '/postprocess', '/health', '/stats', '/feedback'].map((path) => [
+        path,
+        apiProxy,
+      ]),
     ),
   },
   build: {

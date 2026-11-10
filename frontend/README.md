@@ -16,7 +16,7 @@ npm run dev
 - `src/styles/base.css`: reset, focus, reduced motion, and global element defaults.
 - `src/styles/reactbits.css`: the single theme adapter for vendored React Bits components.
 - `src/components/ui/`: reusable buttons, surfaces, notices, and clear confirmation.
-- `src/components/layout/`: application navigation, session feedback, and footer.
+- `src/components/layout/`: application navigation, feedback controls, and footer.
 - `src/pages/`: page composition and colocated component styles.
 - `src/hooks/`: requests, cancellation, image geometry, chat scrolling, clipboard state, and navigation.
 - `src/services/`: transport, image validation, normalization, translation validation, chat context, and exports. No JSX or application state.
@@ -27,7 +27,7 @@ npm run dev
 
 Upload an image or choose the sample, adjust detection confidence, and extract. Cancelling keeps the selected image. The results view pairs a zoomable image with ingredients, six language choices, a label assistant, and optional API output. Motion draws detection boxes using diagonal cursor drags; reduced motion displays the completed boxes directly. Zooming and panning keep boxes attached to the image.
 
-Chat messages have separate sender alignment, readable Markdown, their own scrolling region, and a persistent composer. Network and provider failures appear as chat replies. Ingredient exports follow the selected language. Conversation exports are plain text. Missing translations can be regenerated without rerunning OCR. Likes and ratings are session-only.
+Chat messages have separate sender alignment, readable Markdown, their own scrolling region, and a persistent composer. Network and provider failures appear as chat replies. Ingredient exports follow the selected language. Conversation exports are plain text. Missing translations can be regenerated without rerunning OCR. Likes and ratings sync to MongoDB when `MONGODB_URI` is configured; browser-generated anonymous IDs let each visitor update their own like and rating.
 
 ## Checks
 

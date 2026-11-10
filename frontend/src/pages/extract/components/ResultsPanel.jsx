@@ -48,10 +48,7 @@ export default function ResultsPanel({
     }),
     [view],
   );
-  const { copy: copyJson, copyState } = useResultActions(view, copyViews.json);
-  const { copy: copyCsv } = useResultActions(view, copyViews.csv);
-  const { copy: copyTxt } = useResultActions(view, copyViews.txt);
-  const copyActions = { json: copyJson, csv: copyCsv, txt: copyTxt };
+  const { copyContent, copyState } = useResultActions(view);
   const busy = Boolean(isLLMLoading || isTranslating);
   useEffect(() => {
     if (!formatMenuOpen) return;
@@ -155,7 +152,7 @@ export default function ResultsPanel({
                     onClick={async () => {
                       setCopyFormat(format);
                       setFormatMenuOpen(false);
-                      await copyActions[format]();
+                      await copyContent(copyViews[format].content);
                     }}
                   >
                     {format.toUpperCase()}

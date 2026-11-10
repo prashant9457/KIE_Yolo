@@ -16,6 +16,11 @@ Copy-Item backend/.env.example backend/.env
 
 Set `GROQ_API_KEY` in `backend/.env`. `GROQ_MODEL` defaults to
 `openai/gpt-oss-20b`. `CORS_ORIGINS` lists allowed frontend origins.
+To persist likes and ratings, set your Atlas connection URI in
+`MONGODB_URI` in the ignored `backend/.env` file. Set the database name with
+`MONGODB_DATABASE` (defaults to `ingredient_extraction`). The app stores one
+anonymous like and rating per browser ID and reports aggregate counts.
+URL-encode reserved characters in the URI username or password.
 
 Start the backend:
 
@@ -66,8 +71,8 @@ Motion animates larger cursors arriving from screen edges, then dragging each
 detection from its top-left to its bottom-right corner. Replay restarts the draw;
 zooming or panning completes the overlay so annotations stay attached to the image.
 The AI chatbot tab answers label questions with bounded conversation
-context. Pulse Heart and Peek Rating start at zero and keep feedback only in the
-current page session. Vendored components and their license are in
+context. Likes and ratings use an anonymous browser ID and are saved in MongoDB
+when `MONGODB_URI` is set. Vendored components and their license are in
 `frontend/src/components/reactbits/`.
 
 Default extraction requests translations in English (`en`), Hindi (`hi`), Spanish
